@@ -39,4 +39,5 @@ dependencies {
     implementation(libs.androidx.adaptive)
 
     implementation(project(":core"))
+    implementation(project(":registry"))
 }

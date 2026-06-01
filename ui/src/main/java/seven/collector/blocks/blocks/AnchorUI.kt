@@ -10,10 +10,13 @@ import seven.collector.blocks.state.Anchor
 @Composable
 fun AnchorUIBlock(anchor: Anchor) {
     var moveAnimationBlockId by remember { mutableStateOf<String?>(null) }
+    var resetNodeId by remember { mutableStateOf<String?>(null) }
+
     anchor.children.forEachIndexed { index, node ->
         NodeRenderer(
             node = node,
             animationNodeId = moveAnimationBlockId,
+            resetNodeId = resetNodeId,
             moveBelowNodeForAnimation = { show ->
                 moveAnimationBlockId =
                     if (show && anchor.children.size > index) anchor.children[index + 1].node.id else null

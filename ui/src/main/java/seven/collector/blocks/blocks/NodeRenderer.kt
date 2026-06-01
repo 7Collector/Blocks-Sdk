@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,9 +41,10 @@ import kotlin.math.roundToInt
 fun NodeRenderer(
     node: UINode,
     animationNodeId: String?,
+    resetNodeId: String?,
     moveBelowNodeForAnimation: (showSpace: Boolean) -> Unit,
     addNodeBelow: (UINode) -> Unit,
-    resetDraggedNode: (UINode) -> Unit
+    resetDraggedNode: (UINode) -> Unit,
 ) {
     val dragInfo = LocalDragTargetInfo.current
     var startPosition by remember { mutableStateOf(Offset.Zero) }
@@ -61,19 +63,35 @@ fun NodeRenderer(
         if (!dragInfo.isDragging && isHoveredByAnotherNode && dragInfo.draggedNode != null) {
             if (dragInfo.draggedNode!!.node.outputType == null) {
                 addNodeBelow(dragInfo.draggedNode!!)
+                startPosition = Offset.Zero
             } else {
                 resetDraggedNode(dragInfo.draggedNode!!)
             }
         }
     }
+    LaunchedEffect(resetNodeId) {
+        if (resetNodeId == node.node.id) {
+
+        }
+    }
+
 
     Column(modifier = Modifier.animateContentSize()) {
         if (animationNodeId == node.node.id) {
-            Spacer(Modifier.height(10.dp))
+            Spacer(
+                Modifier
+                    .height(10.dp)
+                    .width(100.dp)
+                    .background(
+                        if (isHoveredByAnotherNode && dragInfo.draggedNode!!.node.outputType == null) Color.Gray.copy(
+                            alpha = 0.5f
+                        ) else Color.White, functionBlockShape
+                    )
+            )
         }
         Box(
             modifier = Modifier
-                .onGloballyPositioned { startPosition = it.localToWindow(Offset.Zero) }
+                .onGloballyPositioned { if (startPosition!= Offset.Zero) startPosition = it.localToWindow(Offset.Zero) }
                 .offset {
                     if (isBeingDragged) IntOffset(
                         x = dragInfo.dragOffset.x.roundToInt(),
@@ -100,6 +118,11 @@ fun NodeRenderer(
                         dragInfo.draggedNode = node
                     })
                 }) {
+            LaunchedEffect(resetNodeId) {
+                if (resetNodeId == node.node.id) {
+                    this@Box.apply { Modifier.offset(x = dragInfo.position.x.dp, y = dragInfo.position.y.dp) }
+                }
+            }
             when (node.node.type) {
                 NodeType.GET_VARIABLE -> GetVariableNodeUI(node)
                 NodeType.SET_VARIABLE -> SetVariableNodeUI(node)
@@ -107,18 +130,22 @@ fun NodeRenderer(
                 NodeType.SCOPED -> ScopedNodeUI(node)
                 NodeType.SCOPED_BRANCHED -> ScopedBranchedNodeUI(node)
             }
+            if (!isBeingDragged) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(10.dp)
+                        .zIndex(0.5f)
+                        .onGloballyPositioned { coordinates ->
+                            val bounds = coordinates.boundsInWindow()
+                            isHoveredByAnotherNode = dragInfo.isDragging && bounds.contains(
+                                dragInfo.position + dragInfo.dragOffset
+                            )
+                        }
+                )
+            }
+
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(10.dp)
-                .zIndex(0.5f)
-                .onGloballyPositioned { coordinates ->
-                    val bounds = coordinates.boundsInWindow()
-                    isHoveredByAnotherNode = dragInfo.isDragging && bounds.contains(
-                        dragInfo.position + dragInfo.dragOffset
-                    )
-                })
     }
 }
 
