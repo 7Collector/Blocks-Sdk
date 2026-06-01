@@ -8,7 +8,7 @@ data class Slot(
     val id: String,
     val label: String,
     val acceptedType: Type,
-    val valueNode: Node? = null,
+    var valueNode: Node? = null,
     val inlineAllowed: Boolean? = acceptedType in listOf(
         Primitives.Int,
         Primitives.Float,
